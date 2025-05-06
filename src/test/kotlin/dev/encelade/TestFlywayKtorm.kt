@@ -3,6 +3,7 @@ package dev.encelade
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
+import org.ktorm.dsl.count
 import org.ktorm.dsl.from
 import org.ktorm.dsl.insert
 import org.ktorm.dsl.select
@@ -31,6 +32,16 @@ class TestFlywayKtorm {
         database.insert(Person) {
             set(Person.firstName, "John")
             set(Person.dateOfBirth, LocalDate.of(1990, 1, 1))
+        }
+
+        database.insert(Person) {
+            set(Person.firstName, "Ben")
+            set(Person.dateOfBirth, LocalDate.of(1985, 6, 1))
+        }
+
+        for (row in database.from(Person).select(count())) {
+            val count = row.getInt(1)
+            println("Count: $count")
         }
 
         for (row in database.from(Person).select()) {
