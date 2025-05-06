@@ -1,5 +1,7 @@
 package dev.encelade
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
@@ -23,7 +25,16 @@ class TestFlywayKtorm {
     fun evaluate() {
         executeFlyway()
 
-        val database = Database.connect(DB_HOST, user = DB_USER, password = DB_PASSWORD)
+        // one way to use named parameters with a Java class
+        val hikariConfig = HikariConfig().apply {
+            driverClassName = "org.h2.Driver"
+            jdbcUrl = DB_HOST
+            username = DB_USER
+            password = DB_PASSWORD
+            maximumPoolSize = 10
+        }
+
+        val database = Database.connect(HikariDataSource(hikariConfig))
 
         // insertion
         database.insert(Person) {
@@ -45,6 +56,7 @@ class TestFlywayKtorm {
         val count = database.from(Person).select(count()).iterator().next().getInt(1)
         println("Count: $count")
 
+        // select all
         for (row in database.from(Person).select()) {
             val id = row[Person.id]
             val firstName = row[Person.firstName]
@@ -52,6 +64,21 @@ class TestFlywayKtorm {
             val addedAt = row[Person.addedAt]
 
             println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
+        }
+
+        // plain SQL
+        database.useConnection { connection ->
+            connection.prepareStatement("select * from person").use { statement ->
+                val resultSet = statement.executeQuery()
+                while (resultSet.next()) {
+                    val id = resultSet.getInt("id")
+                    val firstName = resultSet.getString("first_name")
+                    val dateOfBirth = resultSet.getDate("date_of_birth")
+                    val addedAt = resultSet.getTimestamp("added_at")
+
+                    println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
+                }
+            }
         }
     }
 
