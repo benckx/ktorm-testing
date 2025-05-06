@@ -16,5 +16,11 @@ kotlin {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
+    implementation "org.flywaydb:flyway-core:$flywayVersion"
+    implementation "com.h2database:h2:$h2Version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test"
+}
+
+test {
+    useJUnitPlatform()
 }
