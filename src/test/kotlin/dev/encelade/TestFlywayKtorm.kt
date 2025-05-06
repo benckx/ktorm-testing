@@ -25,6 +25,7 @@ class TestFlywayKtorm {
 
         val database = Database.connect(DB_HOST, user = DB_USER, password = DB_PASSWORD)
 
+        // insertion
         database.insert(Person) {
             set(Person.firstName, "John")
             set(Person.dateOfBirth, LocalDate.of(1990, 1, 1))
@@ -35,10 +36,14 @@ class TestFlywayKtorm {
             set(Person.dateOfBirth, LocalDate.of(1985, 6, 1))
         }
 
+        // select count()
         for (row in database.from(Person).select(count())) {
             val count = row.getInt(1)
             println("Count: $count")
         }
+
+        val count = database.from(Person).select(count()).iterator().next().getInt(1)
+        println("Count: $count")
 
         for (row in database.from(Person).select()) {
             val id = row[Person.id]
