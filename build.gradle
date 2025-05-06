@@ -1,0 +1,20 @@
+plugins {
+    id "com.github.ben-manes.versions" version "0.52.0"
+    id "org.jetbrains.kotlin.jvm" version "$kotlinVersion"
+}
+
+apply plugin: 'kotlin'
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
+}
