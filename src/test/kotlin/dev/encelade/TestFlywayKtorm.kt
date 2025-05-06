@@ -2,17 +2,50 @@ package dev.encelade
 
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
+import org.ktorm.database.Database
+import org.ktorm.dsl.from
+import org.ktorm.dsl.insert
+import org.ktorm.dsl.select
+import org.ktorm.schema.Table
+import org.ktorm.schema.int
+import org.ktorm.schema.varchar
+import org.ktorm.schema.date
+import org.ktorm.schema.datetime
+import java.time.LocalDate
 
 class TestFlywayKtorm {
+
+    object Person : Table<Nothing>("person") {
+        val id = int("id").primaryKey()
+        val firstName = varchar("first_name")
+        val dateOfBirth = date("date_of_birth")
+        val addedAt = datetime("added_at")
+    }
 
     @Test
     fun evaluate() {
         executeFlyway()
+
+        val database = Database.connect(DB_HOST, user = DB_USER, password = DB_PASSWORD)
+
+        database.insert(Person) {
+            set(Person.firstName, "John")
+            set(Person.dateOfBirth, LocalDate.of(1990, 1, 1))
+        }
+
+        for (row in database.from(Person).select()) {
+            val id = row[Person.id]
+            val firstName = row[Person.firstName]
+            val dateOfBirth = row[Person.dateOfBirth]
+            val addedAt = row[Person.addedAt]
+
+            println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
+        }
     }
 
     private fun executeFlyway() {
         val flyway = Flyway.configure()
-            .dataSource("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "")
+            .dataSource(DB_HOST, DB_USER, DB_PASSWORD)
             .locations("classpath:/migrations")
             .load()
 
@@ -30,6 +63,14 @@ class TestFlywayKtorm {
         flyway.migrate()
 
         println("Flyway migrations executed successfully!")
+    }
+
+    private companion object {
+
+        const val DB_HOST = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+        const val DB_USER = "sa"
+        const val DB_PASSWORD = ""
+
     }
 
 }

@@ -19,6 +19,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "org.flywaydb:flyway-core:$flywayVersion"
     implementation "com.h2database:h2:$h2Version"
+    implementation "org.ktorm:ktorm-core:${ktormVersion}"
     testImplementation "org.jetbrains.kotlin:kotlin-test"
 }
 
