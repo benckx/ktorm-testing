@@ -6,9 +6,12 @@ import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
 import org.ktorm.dsl.count
+import org.ktorm.dsl.eq
 import org.ktorm.dsl.from
 import org.ktorm.dsl.insert
+import org.ktorm.dsl.map
 import org.ktorm.dsl.select
+import org.ktorm.dsl.where
 import org.ktorm.schema.*
 import java.time.LocalDate
 
@@ -47,13 +50,25 @@ class TestFlywayKtorm {
             set(Person.dateOfBirth, LocalDate.of(1985, 6, 1))
         }
 
+        database.useTransaction {
+            database.insert(Person) {
+                set(Person.firstName, "Alice")
+                set(Person.dateOfBirth, LocalDate.of(1992, 3, 1))
+            }
+
+            database.insert(Person) {
+                set(Person.firstName, "Bob")
+                set(Person.dateOfBirth, LocalDate.of(1988, 7, 1))
+            }
+        }
+
         // select count()
         for (row in database.from(Person).select(count())) {
             val count = row.getInt(1)
             println("Count: $count")
         }
 
-        val count = database.from(Person).select(count()).iterator().next().getInt(1)
+        val count = database.from(Person).select(count()).map { row -> row.getInt(1) }.first()
         println("Count: $count")
 
         // select all
@@ -68,7 +83,7 @@ class TestFlywayKtorm {
 
         // plain SQL
         database.useConnection { connection ->
-            connection.prepareStatement("select * from person").use { statement ->
+            connection.prepareStatement("select * from person where first_name = 'Alice'").use { statement ->
                 val resultSet = statement.executeQuery()
                 while (resultSet.next()) {
                     val id = resultSet.getInt("id")
@@ -80,6 +95,15 @@ class TestFlywayKtorm {
                 }
             }
         }
+
+        // date of birth of Alice
+        val aliceDateOfBirth = database.from(Person)
+            .select()
+            .where { Person.firstName eq "Alice" }
+            .map { row -> row[Person.dateOfBirth] }
+            .firstOrNull()
+
+        println("Alice's date of birth: $aliceDateOfBirth")
     }
 
     private fun executeFlyway() {
