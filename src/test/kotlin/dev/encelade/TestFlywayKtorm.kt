@@ -7,6 +7,10 @@ class TestFlywayKtorm {
 
     @Test
     fun evaluate() {
+        executeFlyway()
+    }
+
+    private fun executeFlyway() {
         val flyway = Flyway.configure()
             .dataSource("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "")
             .locations("classpath:/migrations")
