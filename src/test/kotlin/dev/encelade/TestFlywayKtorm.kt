@@ -7,11 +7,7 @@ import org.ktorm.dsl.count
 import org.ktorm.dsl.from
 import org.ktorm.dsl.insert
 import org.ktorm.dsl.select
-import org.ktorm.schema.Table
-import org.ktorm.schema.int
-import org.ktorm.schema.varchar
-import org.ktorm.schema.date
-import org.ktorm.schema.datetime
+import org.ktorm.schema.*
 import java.time.LocalDate
 
 class TestFlywayKtorm {
@@ -20,7 +16,7 @@ class TestFlywayKtorm {
         val id = int("id").primaryKey()
         val firstName = varchar("first_name")
         val dateOfBirth = date("date_of_birth")
-        val addedAt = datetime("added_at")
+        val addedAt = timestamp("added_at")
     }
 
     @Test
