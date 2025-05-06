@@ -68,7 +68,7 @@ class TestFlywayKtorm {
             println("Count: $count")
         }
 
-        val count = database.from(Person).select(count()).map { row -> row.getInt(1) }.first()
+        val count = database.from(Person).select(count()).map { it.getInt(1) }.first()
         println("Count: $count")
 
         // select all
@@ -100,7 +100,7 @@ class TestFlywayKtorm {
         val aliceDateOfBirth = database.from(Person)
             .select()
             .where { Person.firstName eq "Alice" }
-            .map { row -> row[Person.dateOfBirth] }
+            .map { it[Person.dateOfBirth] }
             .firstOrNull()
 
         println("Alice's date of birth: $aliceDateOfBirth")
