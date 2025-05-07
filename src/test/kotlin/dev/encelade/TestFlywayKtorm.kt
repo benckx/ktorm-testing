@@ -5,24 +5,30 @@ import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
-import org.ktorm.dsl.count
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.from
-import org.ktorm.dsl.insert
-import org.ktorm.dsl.map
-import org.ktorm.dsl.select
-import org.ktorm.dsl.where
+import org.ktorm.dsl.*
+import org.ktorm.entity.Entity
 import org.ktorm.schema.*
+import java.time.Instant
 import java.time.LocalDate
 
 class TestFlywayKtorm {
 
     // type mapping
-    object Person : Table<Nothing>("person") {
+    object Persons : Table<Person>("person") {
         val id = int("id").primaryKey()
         val firstName = varchar("first_name")
         val dateOfBirth = date("date_of_birth")
         val addedAt = timestamp("added_at")
+    }
+
+    // entity
+    interface Person : Entity<Person> {
+        companion object : Entity.Factory<Person>()
+
+        val id: Int
+        var firstName: String
+        val dateOfBirth: LocalDate
+        val addedAt: Instant
     }
 
     @Test
@@ -41,37 +47,37 @@ class TestFlywayKtorm {
         val database = Database.connect(HikariDataSource(hikariConfig))
 
         // insertion
-        database.insert(Person) {
-            set(Person.firstName, "John")
-            set(Person.dateOfBirth, LocalDate.of(1990, 1, 1))
+        database.insert(Persons) {
+            set(Persons.firstName, "John")
+            set(Persons.dateOfBirth, LocalDate.of(1990, 1, 1))
         }
 
-        database.insert(Person) {
-            set(Person.firstName, "Ben")
-            set(Person.dateOfBirth, LocalDate.of(1985, 6, 1))
+        database.insert(Persons) {
+            set(Persons.firstName, "Ben")
+            set(Persons.dateOfBirth, LocalDate.of(1985, 6, 1))
         }
 
         // transactions
         database.useTransaction {
-            database.insert(Person) {
-                set(Person.firstName, "Alice")
-                set(Person.dateOfBirth, LocalDate.of(1992, 3, 1))
+            database.insert(Persons) {
+                set(Persons.firstName, "Alice")
+                set(Persons.dateOfBirth, LocalDate.of(1992, 3, 1))
             }
 
-            database.insert(Person) {
-                set(Person.firstName, "Bob")
-                set(Person.dateOfBirth, LocalDate.of(1988, 7, 1))
+            database.insert(Persons) {
+                set(Persons.firstName, "Bob")
+                set(Persons.dateOfBirth, LocalDate.of(1988, 7, 1))
             }
         }
 
         // select count()
-        for (row in database.from(Person).select(count())) {
+        for (row in database.from(Persons).select(count())) {
             val count = row.getInt(1)
             println("count: $count")
         }
 
         val count = database
-            .from(Person)
+            .from(Persons)
             .select(count())
             .map { it.getInt(1) }
             .first()
@@ -79,14 +85,17 @@ class TestFlywayKtorm {
         println("count: $count")
 
         // select
-        for (row in database.from(Person).select()) {
-            val id = row[Person.id]
-            val firstName = row[Person.firstName]
-            val dateOfBirth = row[Person.dateOfBirth]
-            val addedAt = row[Person.addedAt]
+        for (row in database.from(Persons).select()) {
+            val id = row[Persons.id]
+            val firstName = row[Persons.firstName]
+            val dateOfBirth = row[Persons.dateOfBirth]
+            val addedAt = row[Persons.addedAt]
 
             println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
         }
+
+        // TODO: sequence
+
 
         // plain SQL
         database.useConnection { connection ->
@@ -104,10 +113,10 @@ class TestFlywayKtorm {
         }
 
         // date of birth of Alice
-        val aliceDateOfBirth = database.from(Person)
+        val aliceDateOfBirth = database.from(Persons)
             .select()
-            .where { Person.firstName eq "Alice" }
-            .map { it[Person.dateOfBirth] }
+            .where { Persons.firstName eq "Alice" }
+            .map { it[Persons.dateOfBirth] }
             .firstOrNull()
 
         println("Alice's date of birth: $aliceDateOfBirth")
