@@ -103,9 +103,9 @@ class TestFlywayKtorm {
                 val resultSet = statement.executeQuery()
                 while (resultSet.next()) {
                     val id = resultSet.getInt("id")
-                    val firstName = resultSet.getString("first_name")
-                    val dateOfBirth = resultSet.getDate("date_of_birth")
-                    val addedAt = resultSet.getTimestamp("added_at")
+                    val firstName = resultSet.getString(Persons.firstName.name)
+                    val dateOfBirth = resultSet.getDate(Persons.dateOfBirth.name)
+                    val addedAt = resultSet.getTimestamp(Persons.addedAt.name)
 
                     println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
                 }
