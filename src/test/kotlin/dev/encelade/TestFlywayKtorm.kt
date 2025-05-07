@@ -17,6 +17,7 @@ import java.time.LocalDate
 
 class TestFlywayKtorm {
 
+    // type mapping
     object Person : Table<Nothing>("person") {
         val id = int("id").primaryKey()
         val firstName = varchar("first_name")
@@ -28,7 +29,7 @@ class TestFlywayKtorm {
     fun evaluate() {
         executeFlyway()
 
-        // one way to use named parameters with a Java class
+        // NB: one way to use named parameters with a Java class
         val hikariConfig = HikariConfig().apply {
             driverClassName = "org.h2.Driver"
             jdbcUrl = DB_HOST
@@ -50,6 +51,7 @@ class TestFlywayKtorm {
             set(Person.dateOfBirth, LocalDate.of(1985, 6, 1))
         }
 
+        // transactions
         database.useTransaction {
             database.insert(Person) {
                 set(Person.firstName, "Alice")
@@ -65,13 +67,18 @@ class TestFlywayKtorm {
         // select count()
         for (row in database.from(Person).select(count())) {
             val count = row.getInt(1)
-            println("Count: $count")
+            println("count: $count")
         }
 
-        val count = database.from(Person).select(count()).map { it.getInt(1) }.first()
-        println("Count: $count")
+        val count = database
+            .from(Person)
+            .select(count())
+            .map { it.getInt(1) }
+            .first()
 
-        // select all
+        println("count: $count")
+
+        // select
         for (row in database.from(Person).select()) {
             val id = row[Person.id]
             val firstName = row[Person.firstName]
