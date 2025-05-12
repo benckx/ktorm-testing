@@ -47,6 +47,7 @@ class TestFlywayKtorm {
 
     @Test
     fun evaluate() {
+        // run Flyway on M2 instance
         executeFlyway()
 
         // NB: one way to use named parameters with a Java class
