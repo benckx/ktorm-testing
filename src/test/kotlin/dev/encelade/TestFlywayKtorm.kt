@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
 import org.ktorm.dsl.*
 import org.ktorm.entity.Entity
+import org.ktorm.entity.filter
+import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.*
 import java.time.Instant
 import java.time.LocalDate
@@ -14,14 +16,24 @@ import java.time.LocalDate
 class TestFlywayKtorm {
 
     // type mapping
-    object Persons : Table<Person>("person") {
+    // simple table
+    object PersonsSimple : Table<Nothing>("person") {
         val id = int("id").primaryKey()
         val firstName = varchar("first_name")
         val dateOfBirth = date("date_of_birth")
         val addedAt = timestamp("added_at")
     }
 
-    // entity
+    // table + entity
+    // bindTo to connect to entity
+    // https://github.com/kotlin-orm/ktorm?tab=readme-ov-file#entities-and-column-binding
+    object Persons : Table<Person>("person") {
+        val id = int("id").primaryKey().bindTo { it.id }
+        val firstName = varchar("first_name").bindTo { it.firstName }
+        val dateOfBirth = date("date_of_birth").bindTo { it.dateOfBirth }
+        val addedAt = timestamp("added_at").bindTo { it.addedAt }
+    }
+
     interface Person : Entity<Person> {
         companion object : Entity.Factory<Person>()
 
@@ -30,6 +42,8 @@ class TestFlywayKtorm {
         val dateOfBirth: LocalDate
         val addedAt: Instant
     }
+
+    val Database.persons get() = this.sequenceOf(Persons)
 
     @Test
     fun evaluate() {
@@ -94,8 +108,15 @@ class TestFlywayKtorm {
             println("$id, first name: $firstName, date of birth: $dateOfBirth, added: $addedAt")
         }
 
-        // TODO: sequence
-
+        // sequence (i.e. streams)
+        // The find and filter functions both accept a lambda expression,
+        // generating a select sql with the condition returned by the lambda.
+        // The generated SQL auto left joins the referenced table
+        database.persons.filter { it.firstName eq "Alice" }
+            .asKotlinSequence()
+            .forEach {
+                println("(seq) id: ${it.id}, first name: ${it.firstName}, date of birth: ${it.dateOfBirth}, added: ${it.addedAt}")
+            }
 
         // plain SQL
         database.useConnection { connection ->
@@ -113,7 +134,8 @@ class TestFlywayKtorm {
         }
 
         // date of birth of Alice
-        val aliceDateOfBirth = database.from(Persons)
+        val aliceDateOfBirth = database
+            .from(Persons)
             .select()
             .where { Persons.firstName eq "Alice" }
             .map { it[Persons.dateOfBirth] }
